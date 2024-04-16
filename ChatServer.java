@@ -3,7 +3,9 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 
@@ -20,13 +22,12 @@ import java.util.concurrent.Executors;
  */
 public class ChatServer {
 
-    // All client names, so we can check for duplicates upon registration.
-    private static Set<String> names = new HashSet<>();
+    // All client names, so we can check for duplicates upon registration.;
+    private static Map<String, Integer> namesMap = new HashMap<String, Integer>();
+    private static int nextKey = 0;
 
     // The set of all the print writers for all the clients, used for broadcast.
     private static Set<PrintWriter> writers = new HashSet<>();
-
-    
 
     public static void main(String[] args) throws Exception {
         System.out.println("The chat server is running...");
@@ -74,9 +75,10 @@ public class ChatServer {
                     if (name == null) {
                         return;
                     }
-                    synchronized (names) {
-                        if (!name.isBlank() && !names.contains(name)) {
-                            names.add(name);
+                    synchronized (namesMap) {
+                        if (!name.isBlank() && !namesMap.containsKey(name)) {
+                            namesMap.put(name, nextKey);
+                            nextKey++;
                             break;
                         }
                     }
@@ -85,9 +87,10 @@ public class ChatServer {
                 // Now that a successful name has been chosen, add the socket's print writer
                 // to the set of all writers so this client can receive broadcast messages.
                 // But BEFORE THAT, let everyone else know that the new person has joined!
-                out.println("NAMEACCEPTED " + name);
+                Integer id = namesMap.get(name);
+                out.println("NAMEACCEPTED:" + id + ":" + name);
                 for (PrintWriter writer : writers) {
-                    writer.println("SYSTEM_MESSAGE_JOIN " + name + " has joined");
+                    writer.println("SYSTEM_MESSAGE_JOIN:" + id + ":" + name + " has joined");
                 }
                 writers.add(out);
 
@@ -98,7 +101,7 @@ public class ChatServer {
                         return;
                     }
                     for (PrintWriter writer : writers) {
-                        writer.println("MESSAGE " + name + ": " + input);
+                        writer.println("MESSAGE:" + id + ":" + name + ": " + input);
                     }
                 }
             } catch (Exception e) {
@@ -109,9 +112,9 @@ public class ChatServer {
                 }
                 if (name != null) {
                     System.out.println(name + " is leaving");
-                    names.remove(name);
+                    namesMap.remove(name);
                     for (PrintWriter writer : writers) {
-                        writer.println("SYSTEM_MESSAGE_LEAVE " + name + " has left");
+                        writer.println("SYSTEM_MESSAGE_LEAVE" + name + " has left");
                     }
                 }
                 try {

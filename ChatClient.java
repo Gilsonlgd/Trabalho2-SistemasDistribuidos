@@ -18,6 +18,10 @@ import javax.swing.text.BadLocationException;
 import java.awt.Color;
 import java.awt.Dimension;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
 /**
  * A simple Swing-based client for the chat server. Graphically it is a frame
  * with a text field for entering messages and a textarea to see the whole
@@ -40,6 +44,8 @@ public class ChatClient {
     JFrame frame = new JFrame("Chatter");
     JTextField textField = new JTextField(50);
     JTextPane messageArea = new JTextPane();
+    Random random = new Random();
+    Map<Integer, Color> colorMap = new HashMap<Integer, Color>();
 
     /**
      * Constructs the client by laying out the GUI and registering a listener with
@@ -72,6 +78,27 @@ public class ChatClient {
                 JOptionPane.PLAIN_MESSAGE);
     }
 
+    private Color getRandomColor() {
+        int r = random.nextInt(256); // Valor entre 0 e 255 para o componente vermelho
+        int g = random.nextInt(256); // Valor entre 0 e 255 para o componente verde
+        int b = random.nextInt(256); // Valor entre 0 e 255 para o componente azul
+        return new Color(r, g, b);
+    }
+
+    private Color addNewClientColor(Integer key) {
+        Color newColor = getRandomColor();
+
+        while (colorMap.containsValue(newColor)) {
+            newColor = getRandomColor();
+        }
+
+        if (!colorMap.containsKey(key)) {
+            colorMap.put(key, newColor);
+        }
+
+        return newColor;
+    }
+
     private void run() throws IOException {
         try {
             var socket = new Socket(serverAddress, 59001);
@@ -83,22 +110,34 @@ public class ChatClient {
 
             while (in.hasNextLine()) {
                 var line = in.nextLine();
+                int firstColonIndex = line.indexOf(":");
+                int secondColonIndex = line.indexOf(":", line.indexOf(":") + 1);
                 if (line.startsWith("SUBMITNAME")) {
                     out.println(getName());
                 } else if (line.startsWith("NAMEACCEPTED")) {
                     this.frame.setTitle("Chatter - " + line.substring(13));
                     textField.setEditable(true);
+
+                    Integer key = Integer.parseInt(line.substring(firstColonIndex + 1, secondColonIndex));
+                    addNewClientColor(key);
                 } else if (line.startsWith("MESSAGE")) {
                     try {
-                        doc.insertString(doc.getLength(), line.substring(8) + "\n", style);
+                        Integer key = Integer.parseInt(line.substring(firstColonIndex + 1, secondColonIndex));
+                        Color clientColor = colorMap.get(key);
+                        if (clientColor == null) { 
+                            clientColor = addNewClientColor(key);
+                        }                            
+
+                        StyleConstants.setForeground(style, clientColor);
+                        doc.insertString(doc.getLength(), line.substring(secondColonIndex + 1) + "\n", style);
+                        StyleConstants.setForeground(style, Color.BLACK);
                     } catch (BadLocationException e) {
                         e.printStackTrace();
                     }
-                    messageArea.setForeground(Color.BLACK);
                 } else if (line.startsWith("SYSTEM_MESSAGE_JOIN")) {
                     try {
                         StyleConstants.setForeground(style, Color.GREEN);
-                        doc.insertString(doc.getLength(), line.substring(20) + "\n", style);
+                        doc.insertString(doc.getLength(), line.substring(secondColonIndex + 1) + "\n", style);
                         StyleConstants.setForeground(style, Color.BLACK);
                     } catch (BadLocationException e) {
                         e.printStackTrace();
@@ -106,7 +145,7 @@ public class ChatClient {
                 } else if (line.startsWith("SYSTEM_MESSAGE_LEAVE")) {
                     try {
                         StyleConstants.setForeground(style, Color.RED);
-                        doc.insertString(doc.getLength(), line.substring(21) + "\n", style);
+                        doc.insertString(doc.getLength(), line.substring(20) + "\n", style);
                         StyleConstants.setForeground(style, Color.BLACK);
                     } catch (BadLocationException e) {
                         e.printStackTrace();

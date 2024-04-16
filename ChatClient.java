@@ -9,8 +9,14 @@ import java.awt.BorderLayout;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 import javax.swing.JTextField;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.BadLocationException;
+import java.awt.Color;
+import java.awt.Dimension;
 
 /**
  * A simple Swing-based client for the chat server. Graphically it is a frame
@@ -33,7 +39,7 @@ public class ChatClient {
     PrintWriter out;
     JFrame frame = new JFrame("Chatter");
     JTextField textField = new JTextField(50);
-    JTextArea messageArea = new JTextArea(16, 50);
+    JTextPane messageArea = new JTextPane();
 
     /**
      * Constructs the client by laying out the GUI and registering a listener with
@@ -46,6 +52,7 @@ public class ChatClient {
         this.serverAddress = serverAddress;
 
         textField.setEditable(false);
+        messageArea.setPreferredSize(new Dimension(400, 300));
         messageArea.setEditable(false);
         frame.getContentPane().add(textField, BorderLayout.SOUTH);
         frame.getContentPane().add(new JScrollPane(messageArea), BorderLayout.CENTER);
@@ -71,6 +78,9 @@ public class ChatClient {
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
 
+            StyledDocument doc = messageArea.getStyledDocument();
+            Style style = messageArea.addStyle("Style", null);
+
             while (in.hasNextLine()) {
                 var line = in.nextLine();
                 if (line.startsWith("SUBMITNAME")) {
@@ -79,9 +89,28 @@ public class ChatClient {
                     this.frame.setTitle("Chatter - " + line.substring(13));
                     textField.setEditable(true);
                 } else if (line.startsWith("MESSAGE")) {
-                    messageArea.append(line.substring(8) + "\n");
-                } else if (line.startsWith("SYSTEM_MESSAGE")) {
-                    messageArea.append(line.substring(14) + "---------" + "\n" );
+                    try {
+                        doc.insertString(doc.getLength(), line.substring(8) + "\n", style);
+                    } catch (BadLocationException e) {
+                        e.printStackTrace();
+                    }
+                    messageArea.setForeground(Color.BLACK);
+                } else if (line.startsWith("SYSTEM_MESSAGE_JOIN")) {
+                    try {
+                        StyleConstants.setForeground(style, Color.GREEN);
+                        doc.insertString(doc.getLength(), line.substring(20) + "\n", style);
+                        StyleConstants.setForeground(style, Color.BLACK);
+                    } catch (BadLocationException e) {
+                        e.printStackTrace();
+                    }    
+                } else if (line.startsWith("SYSTEM_MESSAGE_LEAVE")) {
+                    try {
+                        StyleConstants.setForeground(style, Color.RED);
+                        doc.insertString(doc.getLength(), line.substring(21) + "\n", style);
+                        StyleConstants.setForeground(style, Color.BLACK);
+                    } catch (BadLocationException e) {
+                        e.printStackTrace();
+                    }    
                 }
             }
         } finally {

@@ -3,11 +3,14 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
+
+import interfaces.IUserChat;
 
 /**
  * A multithreaded chat room server. When a client connects the server requests
@@ -21,6 +24,9 @@ import java.util.concurrent.Executors;
  * better logging. Another is to accept a lot of fun commands, like Slack.
  */
 public class ChatServer {
+    // roomList
+    private ArrayList<String> roomList;
+    private Map<String, IUserChat> userList;
 
     // All client names, so we can check for duplicates upon registration.;
     private static Map<String, Integer> namesMap = new HashMap<String, Integer>();

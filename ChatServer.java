@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,7 +25,7 @@ import interfaces.IUserChat;
  * This is just a teaching example so it can be enhanced in many ways, e.g.,
  * better logging. Another is to accept a lot of fun commands, like Slack.
  */
-public class ChatServer {
+public class ChatServer extends UnicastRemoteObject implements interfaces.IServerChat {
     // roomList
     private ArrayList<String> roomList;
     private Map<String, IUserChat> userList;
@@ -35,13 +37,46 @@ public class ChatServer {
     // The set of all the print writers for all the clients, used for broadcast.
     private static Set<PrintWriter> writers = new HashSet<>();
 
+    /* Novo */
+    public ChatServer() throws RemoteException {
+        roomList = new ArrayList<>();
+        roomList.add("General");
+        roomList.add("Random");
+        System.out.println("ChatServer created");
+        userList = new HashMap<>();
+    }
+
+    /* Novo */
+    @Override
+    public ArrayList<String> getRooms() {
+        // Se o cliente chamar getRooms, e printar no terminal do server, a chamada remota aconteceu?
+        // Se sim, já temos uma chamada remota funcionando
+        roomList.forEach(room -> System.out.println(room));
+        return roomList;
+    }
+    
+    /* Novo */
+    @Override
+    public void createRoom(String roomName) {
+        roomList.add(roomName);
+    }
+
     public static void main(String[] args) throws Exception {
         System.out.println("The chat server is running...");
         var pool = Executors.newFixedThreadPool(500);
-        try (var listener = new ServerSocket(59001)) {
-            while (true) {
-                pool.execute(new Handler(listener.accept()));
+
+        /* Novo */
+        try {
+            ChatServer server = new ChatServer();
+            java.rmi.registry.LocateRegistry.createRegistry(1099).rebind("ChatServer", server);
+
+            try (var listener = new ServerSocket(59001)) {
+                while (true) {
+                    pool.execute(new Handler(listener.accept()));
+                }
             }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 

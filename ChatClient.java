@@ -3,6 +3,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
 import java.util.Scanner;
 
 import java.awt.BorderLayout;
@@ -17,10 +19,12 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.BadLocationException;
 import java.awt.Color;
 import java.awt.Dimension;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
+import interfaces.IServerChat;
 
 /**
  * A simple Swing-based client for the chat server. Graphically it is a frame
@@ -36,7 +40,9 @@ import java.util.Random;
  * When the server sends a line beginning with "MESSAGE" then all characters
  * following this string should be displayed in its message area.
  */
-public class ChatClient {
+public class ChatClient implements interfaces.IUserChat {
+    /* Novo */
+    IServerChat server;
 
     String serverAddress;
     Scanner in;
@@ -46,6 +52,10 @@ public class ChatClient {
     JTextPane messageArea = new JTextPane();
     Random random = new Random();
     Map<Integer, Color> colorMap = new HashMap<Integer, Color>();
+
+    public void deliverMsg(String senderName, String msg) {
+        out.println("MESSAGE:" + senderName + ":" + msg);
+    }
 
     /**
      * Constructs the client by laying out the GUI and registering a listener with
@@ -105,6 +115,15 @@ public class ChatClient {
             in = new Scanner(socket.getInputStream());
             out = new PrintWriter(socket.getOutputStream(), true);
 
+            try {
+                server = (IServerChat) Naming.lookup("rmi://" + serverAddress + "/ChatServer");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // Apenas para testar se chamada remota está funcionando
+            this.listRooms();
+
             StyledDocument doc = messageArea.getStyledDocument();
             Style style = messageArea.addStyle("Style", null);
 
@@ -124,9 +143,9 @@ public class ChatClient {
                     try {
                         Integer key = Integer.parseInt(line.substring(firstColonIndex + 1, secondColonIndex));
                         Color clientColor = colorMap.get(key);
-                        if (clientColor == null) { 
+                        if (clientColor == null) {
                             clientColor = addNewClientColor(key);
-                        }                            
+                        }
 
                         StyleConstants.setForeground(style, clientColor);
                         doc.insertString(doc.getLength(), line.substring(secondColonIndex + 1) + "\n", style);
@@ -141,7 +160,7 @@ public class ChatClient {
                         StyleConstants.setForeground(style, Color.BLACK);
                     } catch (BadLocationException e) {
                         e.printStackTrace();
-                    }    
+                    }
                 } else if (line.startsWith("SYSTEM_MESSAGE_LEAVE")) {
                     try {
                         StyleConstants.setForeground(style, Color.RED);
@@ -149,13 +168,19 @@ public class ChatClient {
                         StyleConstants.setForeground(style, Color.BLACK);
                     } catch (BadLocationException e) {
                         e.printStackTrace();
-                    }    
+                    }
                 }
             }
         } finally {
             frame.setVisible(false);
             frame.dispose();
         }
+    }
+
+    /* Para testar a chamada remota */
+    public void listRooms() throws RemoteException {
+        ArrayList<String> rooms = server.getRooms();
+        rooms.forEach(room -> System.out.println(room));
     }
 
     public static void main(String[] args) throws Exception {

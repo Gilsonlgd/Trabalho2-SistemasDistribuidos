@@ -73,10 +73,8 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
                 try {
                     leaveRoom();
                 } catch (MalformedURLException e1) {
-                    // TODO Auto-generated catch block
                     e1.printStackTrace();
                 } catch (NotBoundException e1) {
-                    // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
             }
@@ -114,6 +112,8 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
                         server.createRoom(newRoomName);
                         rooms = server.getRooms(); // Refresh the rooms list
                         roomName = newRoomName; // Set the newly created room as the selected room
+                        selectRoom(); // Return to room selection
+                        return;
                     } else {
                         JOptionPane.showMessageDialog(frame, "Room creation canceled.");
                         selectRoom(); // Retry room selection

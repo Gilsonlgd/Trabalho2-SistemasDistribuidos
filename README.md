@@ -1,4 +1,4 @@
-# Trabalho1-SistemasDistribuidos
+# Trabalho2-SistemasDistribuidos
 Alunos: Gilson Garcia e Jhuan Assumpção
 
 Para compilar o projeto, a partir da raiz do projeto, execute os comandos:

@@ -100,7 +100,7 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
     private void selectRoom() throws MalformedURLException, NotBoundException {
         try {
             ArrayList<String> rooms = server.getRooms();
-            rooms.add("Create New Room"); // Add the option to create a new room
+            rooms.add("Create New Room"); // Adiciona a opção para criar nova sala
 
             String roomName = (String) JOptionPane.showInputDialog(frame, "Select or create a room:", "Room selection",
                     JOptionPane.PLAIN_MESSAGE, null, rooms.toArray(),
@@ -112,13 +112,13 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
                             JOptionPane.PLAIN_MESSAGE);
                     if (newRoomName != null && !newRoomName.isEmpty()) {
                         server.createRoom(newRoomName);
-                        rooms = server.getRooms(); // Refresh the rooms list
-                        roomName = newRoomName; // Set the newly created room as the selected room
-                        selectRoom(); // Return to room selection
+                        rooms = server.getRooms(); // Atualiza a lista de salas
+                        roomName = newRoomName; // Seleciona a nova sala
+                        selectRoom(); // Retorna para a seleção de sala
                         return;
                     } else {
                         JOptionPane.showMessageDialog(frame, "Room creation canceled.");
-                        selectRoom(); // Retry room selection
+                        selectRoom(); // Tentar novamente a seleção de sala
                         return;
                     }
                 }
@@ -130,7 +130,7 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
                     textField.setEditable(true);
                 } catch (NotBoundException e) {
                     JOptionPane.showMessageDialog(frame, "Room not found. Please try again.");
-                    selectRoom(); // Retry room selection
+                    selectRoom(); // Tentar novamente a seleção de sala
                 }
             }
         } catch (RemoteException e) {
@@ -145,7 +145,7 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
                 room = null;
                 textField.setEditable(false);
                 frame.setTitle("Chatter");
-                messageArea.setText(""); // Clear message area when leaving the room
+                messageArea.setText(""); // Limpa a área de mensagens ao sair da sala
                 selectRoom();
             }
         } catch (RemoteException e) {
@@ -169,7 +169,7 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
                 room = null;
                 textField.setEditable(false);
                 frame.setTitle("Chatter");
-                messageArea.setText(""); // Clear message area when leaving the room
+                messageArea.setText(""); // Limpa a área de mensagens ao sair da sala
                 selectRoom();
             }
         } catch (BadLocationException e) {

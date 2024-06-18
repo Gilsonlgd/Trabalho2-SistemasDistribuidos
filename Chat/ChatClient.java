@@ -103,10 +103,12 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
             rooms.add("Create New Room"); // Add the option to create a new room
 
             String roomName = (String) JOptionPane.showInputDialog(frame, "Select or create a room:", "Room selection",
-                    JOptionPane.PLAIN_MESSAGE, null, rooms.toArray(), rooms.isEmpty() ? "No rooms available" : rooms.get(0));
+                    JOptionPane.PLAIN_MESSAGE, null, rooms.toArray(),
+                    rooms.isEmpty() ? "No rooms available" : rooms.get(0));
             if (roomName != null && !roomName.isEmpty()) {
                 if (roomName.equals("Create New Room")) {
-                    String newRoomName = JOptionPane.showInputDialog(frame, "Enter the name for the new room:", "New Room Creation",
+                    String newRoomName = JOptionPane.showInputDialog(frame, "Enter the name for the new room:",
+                            "New Room Creation",
                             JOptionPane.PLAIN_MESSAGE);
                     if (newRoomName != null && !newRoomName.isEmpty()) {
                         server.createRoom(newRoomName);
@@ -163,7 +165,18 @@ public class ChatClient extends UnicastRemoteObject implements IUserChat {
         StyleConstants.setForeground(style, color);
         try {
             doc.insertString(doc.getLength(), senderName + ": " + msg + "\n", style);
+            if (msg.equals("Sala fechada pelo servidor.") && room != null) {
+                room = null;
+                textField.setEditable(false);
+                frame.setTitle("Chatter");
+                messageArea.setText(""); // Clear message area when leaving the room
+                selectRoom();
+            }
         } catch (BadLocationException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (NotBoundException e) {
             e.printStackTrace();
         }
     }
